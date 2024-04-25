@@ -15,5 +15,6 @@ dependencies:
     - adamp
     - scipy
     - tables
-    - tensorboard
+    - tensorboard==2.5.0
     - torchdiffeq
+    - setuptools==59.5.0
