@@ -6,6 +6,7 @@ sys.path.append(file_dir)
 
 import torch
 import numpy as np
+
 np.object = object
 np.bool = bool
 import torch.nn as nn
