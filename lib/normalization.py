@@ -2,12 +2,14 @@ import numpy as np
 import torch
 
 
+# 不归一化
 class NScaler(object):
     def transform(self, data):
         return data
     def inverse_transform(self, data):
         return data
 
+# 标准化
 class StandardScaler:
     """
     Standard the input
@@ -26,6 +28,7 @@ class StandardScaler:
             self.mean = torch.from_numpy(self.mean).to(data.device).type(data.dtype)
         return (data * self.std) + self.mean
 
+# 最大最小归一化
 class MinMax01Scaler:
     """
     Standard the input
@@ -62,6 +65,7 @@ class MinMax11Scaler:
             self.max = torch.from_numpy(self.max).to(data.device).type(data.dtype)
         return ((data + 1.) / 2.) * (self.max - self.min) + self.min
 
+# 按列最大最小归一化
 class ColumnMinMaxScaler():
     #Note: to use this scale, must init the min and max with column min and column max
     def __init__(self, min, max):
@@ -78,6 +82,7 @@ class ColumnMinMaxScaler():
             self.min = torch.from_numpy(self.min).to(data.device).type(torch.float32)
         #print(data.dtype, self.min_max.dtype, self.min.dtype)
         return (data * self.min_max + self.min)
+
 
 def one_hot_by_column(data):
     #data is a 2D numpy array
@@ -116,15 +121,9 @@ if __name__ == '__main__':
 
     test_data = np.array([[0,0,0, 1], [0, 1, 3, 2], [0, 2, 1, 3]])
     print(test_data)
-    minimum = test_data.min(axis=1)
-    print(minimum, minimum.shape, test_data.shape)
-    maximum = test_data.max(axis=1)
-    print(maximum)
-    print(test_data-minimum)
-    test_data = (test_data-minimum) / (maximum-minimum)
-    print(test_data)
     print(0 == 0)
     print(0.00 == 0)
     print(0 == 0.00)
-    #print(one_hot_by_column(test_data))
-    #print(minmax_by_column(test_data))
+    print(one_hot_by_column(test_data))
+    print(minmax_by_column(test_data))
+    print(test_data)

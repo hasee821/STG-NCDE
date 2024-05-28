@@ -8,6 +8,8 @@ from lib.logger import get_logger
 from lib.metrics import All_Metrics
 from lib.TrainInits import print_model_parameters
 
+# 有用的仅train，test,   real_value为true，则不对输出进行标准化缩放。
+
 class Trainer(object):
     def __init__(self, model, vector_field_f, vector_field_g, loss, optimizer, train_loader, val_loader, test_loader,
                  scaler, args, lr_scheduler, device, times,
@@ -58,7 +60,7 @@ class Trainer(object):
                 if self.args.real_value:
                     label = self.scaler.inverse_transform(label)
                 loss = self.loss(output.cuda(), label)
-                #a whole batch of Metr_LA is filtered
+                #a whole batch of Metr_LA is filtered，
                 if not torch.isnan(loss):
                     total_val_loss += loss.item()
         val_loss = total_val_loss / len(val_dataloader)
@@ -74,7 +76,7 @@ class Trainer(object):
         # for batch_idx, (data, target) in enumerate(self.train_loader):
         for batch_idx, batch in enumerate(self.train_loader):
             batch = tuple(b.to(self.device, dtype=torch.float) for b in batch)
-            *train_coeffs, target = batch
+            *train_coeffs, target = batch  #*test_coeffs, target = batch 这行代码是将batch元组中的元素分配给test_coeffs和target。这里的*操作符用于解包元组，它会将元组中的大部分元素赋值给test_coeffs，而最后一个元素则赋值给target。这是Python的一种高级赋值方式，可以方便地将一个序列的元素分配给多个变量。
             # data = data[..., :self.args.input_dim]
             label = target[..., :self.args.output_dim]  # (..., 1)
             self.optimizer.zero_grad()
@@ -93,11 +95,11 @@ class Trainer(object):
                 label = self.scaler.inverse_transform(label)
             loss = self.loss(output.cuda(), label)
             
-            # loss = _add_weight_regularisation(loss, self.vector_field_g) #TODO: regularization
+# loss = _add_weight_regularisation(loss, self.vector_field_g) #TODO: regularization
             # loss = _add_weight_regularisation(loss, self.vector_field_f) #TODO: regularization
             loss.backward()
 
-            # add max grad clipping
+# add max grad clipping，最大梯度裁剪，防止梯度爆炸
             if self.args.grad_norm:
                 torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.args.max_grad_norm)
             self.optimizer.step()
@@ -150,7 +152,7 @@ class Trainer(object):
             else:
                 not_improved_count += 1
                 best_state = False
-            # early stop
+            # early stop，如果连续early_stop_patience次没有提升，则停止训练
             if self.args.early_stop:
                 if not_improved_count == self.args.early_stop_patience:
                     self.logger.info("Validation performance didn\'t improve for {} epochs. "
@@ -205,7 +207,7 @@ class Trainer(object):
         with torch.no_grad():
             for batch_idx, batch in enumerate(data_loader):
                 batch = tuple(b.to(args.device, dtype=torch.float) for b in batch)
-                *test_coeffs, target = batch
+                *test_coeffs, target = batch #  test_coeffs前的*号代表
                 label = target[..., :args.output_dim]
                 output = model(times.to(args.device, dtype=torch.float), test_coeffs)
                 y_true.append(label)
@@ -259,6 +261,8 @@ class Trainer(object):
         mae, rmse, mape, _, _ = All_Metrics(y_pred, y_true, args.mae_thresh, args.mape_thresh)
         logger.info("Average Horizon, MAE: {:.2f}, RMSE: {:.2f}, MAPE: {:.4f}%".format(
                     mae, rmse, mape*100))
+
+#请说明test_simple和test的区别：test_simple不保存输出结果。
 
     @staticmethod
     def _compute_sampling_threshold(global_step, k):

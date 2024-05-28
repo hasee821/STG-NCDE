@@ -6,6 +6,9 @@ from lib.load_dataset import load_st_dataset
 from lib.normalization import NScaler, MinMax01Scaler, MinMax11Scaler, StandardScaler, ColumnMinMaxScaler
 import controldiffeq
 
+# repeat函数参数，第一个参数行上重复次数，第二个参数是列上重复的次数，第三个参数通道维上重复的次数
+
+
 def normalize_dataset(data, normalizer, column_wise=False):
     if normalizer == 'max01':
         if column_wise:
@@ -81,15 +84,15 @@ def data_loader(X, Y, batch_size, shuffle=True, drop_last=True):
                                              shuffle=shuffle, drop_last=drop_last)
     return dataloader
 
-def data_loader_cde(X, Y, batch_size, shuffle=True, drop_last=True):
+def data_loader_cde(X, Y, batch_size, shuffle=True, drop_last=True): 
     cuda = True if torch.cuda.is_available() else False
     TensorFloat = torch.cuda.FloatTensor if cuda else torch.FloatTensor
     # X, Y = TensorFloat(X), TensorFloat(Y)
     # X = tuple(TensorFloat(x) for x in X)
     # Y = TensorFloat(Y)
-    data = torch.utils.data.TensorDataset(*X, torch.tensor(Y))
+    data = torch.utils.data.TensorDataset(*X, torch.tensor(Y)) #*X 是一个解包操作，它会将 X 中的所有 tensor 作为单独的参数传递给 TensorDataset
     dataloader = torch.utils.data.DataLoader(data, batch_size=batch_size,
-                                             shuffle=shuffle, drop_last=drop_last)
+                                             shuffle=shuffle, drop_last=drop_last)#drop_last是否丢弃最后一个不完整的batch
     return dataloader
 
 
@@ -131,7 +134,7 @@ def get_dataloader_cde(args, normalizer = 'std', tod=False, dow=False, weather=F
         data_train, data_val, data_test = split_data_by_ratio(data, args.val_ratio, args.test_ratio)
     #add time window
     x_tra, y_tra = Add_Window_Horizon(data_train, args.lag, args.horizon, single)
-    x_val, y_val = Add_Window_Horizon(data_val, args.lag, args.horizon, single)
+    x_val, y_val = Add_Window_Horizon(data_val, args.lag, args.horizon, single)  #B,T,N,F    |   F=1
     x_test, y_test = Add_Window_Horizon(data_test, args.lag, args.horizon, single)
     print('Train: ', x_tra.shape, y_tra.shape)
     print('Val: ', x_val.shape, y_val.shape)
@@ -144,6 +147,9 @@ def get_dataloader_cde(args, normalizer = 'std', tod=False, dow=False, weather=F
         for xi in xs:
             removed_points_seq = torch.randperm(xs.shape[1], generator=generator)[:int(xs.shape[1] * args.missing_rate)].sort().values
             removed_points_node = torch.randperm(xs.shape[2], generator=generator)[:int(xs.shape[2] * args.missing_rate)].sort().values
+            #randperm returns a random permutation of integers from 0 to n-1
+            #.values returns the values of the tensor
+            # generator is used to make the random number generation reproducible
 
             for seq in removed_points_seq:
                 for node in removed_points_node:
@@ -155,7 +161,7 @@ def get_dataloader_cde(args, normalizer = 'std', tod=False, dow=False, weather=F
     # TODO: make argument for data category
     data_category = 'traffic'
     if data_category == 'traffic':
-        times = torch.linspace(0, 11, 12)
+        times = torch.linspace(0, 11, 12)   #linespace(start, end, num)表示在start和end之间生成num个等间隔的点，包括start和end
     elif data_category == 'token':
         times = torch.linspace(0, 6, 7)
     else:
@@ -164,6 +170,7 @@ def get_dataloader_cde(args, normalizer = 'std', tod=False, dow=False, weather=F
     augmented_X_tra.append(times.unsqueeze(0).unsqueeze(0).repeat(x_tra.shape[0],x_tra.shape[2],1).unsqueeze(-1).transpose(1,2))
     augmented_X_tra.append(torch.Tensor(x_tra[..., :]))
     x_tra = torch.cat(augmented_X_tra, dim=3)
+
     augmented_X_val = []
     augmented_X_val.append(times.unsqueeze(0).unsqueeze(0).repeat(x_val.shape[0],x_val.shape[2],1).unsqueeze(-1).transpose(1,2))
     augmented_X_val.append(torch.Tensor(x_val[..., :]))
@@ -173,7 +180,7 @@ def get_dataloader_cde(args, normalizer = 'std', tod=False, dow=False, weather=F
     augmented_X_test.append(torch.Tensor(x_test[..., :]))
     x_test = torch.cat(augmented_X_test, dim=3)
 
-    ####
+    ####对x进行插值
     # train_coeffs = controldiffeq.natural_cubic_spline_coeffs(times, torch.Tensor(x_tra).transpose(1,2))
     # valid_coeffs = controldiffeq.natural_cubic_spline_coeffs(times, torch.Tensor(x_val).transpose(1,2))
     # test_coeffs = controldiffeq.natural_cubic_spline_coeffs(times, torch.Tensor(x_test).transpose(1,2))

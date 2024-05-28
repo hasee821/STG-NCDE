@@ -1,5 +1,6 @@
 import numpy as np
 
+# horizon is the number of steps to predict, window is the number of steps to look back,single is True means only predict one step·
 def Add_Window_Horizon(data, window=3, horizon=1, single=False):
     '''
     :param data: shape [B, ...]
@@ -15,7 +16,7 @@ def Add_Window_Horizon(data, window=3, horizon=1, single=False):
     if single:
         while index < end_index:
             X.append(data[index:index+window])
-            Y.append(data[index+window+horizon-1:index+window+horizon])
+            Y.append(data[index+window+horizon-1:index+window+horizon]) #only predict one step in the last of horizon
             index = index + 1
     else:
         while index < end_index:

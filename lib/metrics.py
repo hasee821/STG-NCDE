@@ -10,21 +10,21 @@ import torch
 
 def MAE_torch(pred, true, mask_value=None):
     if mask_value != None:
-        mask = torch.gt(true, mask_value)
+        mask = torch.gt(true, mask_value) #保留true中大于mask_value的值，去掉接近0的值
         pred = torch.masked_select(pred, mask)
         true = torch.masked_select(true, mask)
     return torch.mean(torch.abs(true-pred))
 
 def MSE_torch(pred, true, mask_value=None):
     if mask_value != None:
-        mask = torch.gt(true, mask_value)
+        mask = torch.gt(true, mask_value) 
         pred = torch.masked_select(pred, mask)
         true = torch.masked_select(true, mask)
     return torch.mean((pred - true) ** 2)
 
 def RMSE_torch(pred, true, mask_value=None):
     if mask_value != None:
-        mask = torch.gt(true, mask_value)
+        mask = torch.gt(true, mask_value)  
         pred = torch.masked_select(pred, mask)
         true = torch.masked_select(true, mask)
     return torch.sqrt(torch.mean((pred - true) ** 2))
@@ -61,7 +61,7 @@ def CORR_torch(pred, true, mask_value=None):
     return correlation
 
 
-def MAPE_torch(pred, true, mask_value=None):
+def MAPE_torch(pred, true, mask_value=None):   #保证true足够大
     if mask_value != None:
         mask = torch.gt(true, mask_value)
         pred = torch.masked_select(pred, mask)
