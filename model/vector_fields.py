@@ -2,6 +2,10 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+# view()参数解释：-1表示自适应，即根据另一个维度的值推断这个维度的值
+# FinalTanh_f   多层Linear，输入h，
+# VectorField_g  输入z，自适应图卷积
+
 class FinalTanh_f(nn.Module):
     def __init__(self, input_channels, hidden_channels, hidden_hidden_channels, num_hidden_layers):
         super(FinalTanh_f, self).__init__()
@@ -15,7 +19,7 @@ class FinalTanh_f(nn.Module):
         
         self.linears = nn.ModuleList(torch.nn.Linear(hidden_hidden_channels, hidden_hidden_channels)
                                            for _ in range(num_hidden_layers - 1))
-        self.linear_out = nn.Linear(hidden_hidden_channels, input_channels * hidden_channels) #32,32*4  -> # 32,32,4 
+        self.linear_out = nn.Linear(hidden_hidden_channels, input_channels * hidden_channels)  
 
     def extra_repr(self):
         return "input_channels: {}, hidden_channels: {}, hidden_hidden_channels: {}, num_hidden_layers: {}" \
@@ -30,7 +34,7 @@ class FinalTanh_f(nn.Module):
             z = z.relu()
         # z: torch.Size([64, 207, 32])
         # self.linear_out(z): torch.Size([64, 207, 64])
-        z = self.linear_out(z).view(*z.shape[:-1], self.hidden_channels, self.input_channels)    
+        z = self.linear_out(z).view(*z.shape[:-1], self.hidden_channels, self.input_channels)    #  -> # B,N,F,in_channels
         z = z.tanh()
         return z
 

@@ -158,7 +158,7 @@ def get_dataloader_cde(args, normalizer = 'std', tod=False, dow=False, weather=F
         x_val = xs[x_tra.shape[0]:x_tra.shape[0]+x_val.shape[0],...]
         x_test = xs[-x_test.shape[0]:,...] 
     ####
-    # TODO: make argument for data category
+    # TODO: make argument for data category，times长度与输入数据长度相同，记录每个输入窗口中时间点序号（0-11），用于后续插值
     data_category = 'traffic'
     if data_category == 'traffic':
         times = torch.linspace(0, 11, 12)   #linespace(start, end, num)表示在start和end之间生成num个等间隔的点，包括start和end
@@ -184,7 +184,7 @@ def get_dataloader_cde(args, normalizer = 'std', tod=False, dow=False, weather=F
     # train_coeffs = controldiffeq.natural_cubic_spline_coeffs(times, torch.Tensor(x_tra).transpose(1,2))
     # valid_coeffs = controldiffeq.natural_cubic_spline_coeffs(times, torch.Tensor(x_val).transpose(1,2))
     # test_coeffs = controldiffeq.natural_cubic_spline_coeffs(times, torch.Tensor(x_test).transpose(1,2))
-    train_coeffs = controldiffeq.natural_cubic_spline_coeffs(times, x_tra.transpose(1,2))
+    train_coeffs = controldiffeq.natural_cubic_spline_coeffs(times, x_tra.transpose(1,2))  #输入x  B,N,T,F   输出a,b,two_c,three_d立方样条差值系数
     valid_coeffs = controldiffeq.natural_cubic_spline_coeffs(times, x_val.transpose(1,2))
     test_coeffs = controldiffeq.natural_cubic_spline_coeffs(times, x_test.transpose(1,2))
     # train_coeffs = tuple(coeff.transpose(1,2) for coeff in train_coeffs)

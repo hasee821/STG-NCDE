@@ -1,5 +1,5 @@
-from vector_fields import *
-from GCDE import *
+from model.vector_fields import *
+from model.GCDE import *
 
 def make_model(args):
     if args.model_type == 'type1':

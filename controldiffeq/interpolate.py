@@ -3,6 +3,11 @@ import torch
 
 from . import misc
 
+#请解释什么是立方样条插值
+#立方样条插值是一种插值方法，它使用一组三次多项式来逼近一组数据点。这些多项式在相邻数据点之间是连续的，并且在这些数据点上有相同的一阶和二阶导数。
+#在每个小区间上具体插值公式如下：
+#S(x) = a + b(x - x_i) + c/2(x - x_i)^2 + d/3(x - x_i)^3
+#对于n个点区间，有n-1个插值多项式，每个多项式有4个系数，所以总共有4(n-1)个系数
 
 def _natural_cubic_spline_coeffs_without_missing_values(times, path):
     # path should be a tensor of shape (..., length)
@@ -16,7 +21,7 @@ def _natural_cubic_spline_coeffs_without_missing_values(times, path):
     elif length == 2:
         a = path[..., :1]
         b = (path[..., 1:] - path[..., :1]) / (times[..., 1:] - times[..., :1])
-        two_c = torch.zeros(*path.shape[:-1], 1, dtype=path.dtype, device=path.device)
+        two_c = torch.zeros(*path.shape[:-1], 1, dtype=path.dtype, device=path.device)  # B,N,F,1
         three_d = torch.zeros(*path.shape[:-1], 1, dtype=path.dtype, device=path.device)
     else:
         # Set up some intermediate values
@@ -50,7 +55,7 @@ def _natural_cubic_spline_coeffs_without_missing_values(times, path):
                    + 3 * (knot_derivatives[..., :-1]
                           + knot_derivatives[..., 1:])) * time_diffs_reciprocal_squared
 
-    return a, b, two_c, three_d
+    return a, b, two_c, three_d   #B,N,F,T-1
 
 
 def _natural_cubic_spline_coeffs_with_missing_values(t, path):
@@ -210,7 +215,7 @@ def natural_cubic_spline_coeffs(t, X):
     if t.size(0) < 2:
         raise ValueError("Must have a time dimension of size at least 2.")
 
-    if torch.isnan(X).any():
+    if torch.isnan(X).any(): #
         # Transpose because channels are a batch dimension for the purpose of finding interpolating polynomials.
         # b, two_c, three_d have shape (..., channels, length - 1)
         a, b, two_c, three_d = _natural_cubic_spline_coeffs_with_missing_values(t, X.transpose(-1, -2))
@@ -258,7 +263,7 @@ class NaturalCubicSpline:
         self._two_c = two_c
         self._three_d = three_d
 
-    def _interpret_t(self, t):
+    def _interpret_t(self, t): #该函数作用：找到t所在的区间，计算t在该区间的相对位置
         maxlen = self._b.size(-2) - 1
         index = (t > self._times).sum() - 1
         index = index.clamp(0, maxlen)  # clamp because t may go outside of [t[0], t[-1]]; this is fine

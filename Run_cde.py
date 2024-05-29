@@ -28,7 +28,7 @@ DATASET = 'PEMSD4'      #PEMSD4 or PEMSD8
 MODEL = 'GCDE'
 
 #get configuration
-config_file = './{}_{}.conf'.format(DATASET, MODEL)
+config_file = './model/{}_{}.conf'.format(DATASET, MODEL)
 #print('Read configuration file: %s' % (config_file))
 config = configparser.ConfigParser()
 config.read(config_file)
@@ -99,7 +99,7 @@ args.add_argument('--mae_thresh', default=config['test']['mae_thresh'], type=eva
 args.add_argument('--mape_thresh', default=config['test']['mape_thresh'], type=float)
 args.add_argument('--model_path', default='', type=str)
 #log
-args.add_argument('--log_dir', default='../runs', type=str)
+args.add_argument('--log_dir', default='./runs', type=str)
 args.add_argument('--log_step', default=config['log']['log_step'], type=int)
 args.add_argument('--plot', default=config['log']['plot'], type=eval)
 args.add_argument('--tensorboard',action='store_true',help='tensorboard')
@@ -115,7 +115,7 @@ print(args)
 
 #config log path
 save_name = time.strftime("%m-%d-%Hh%Mm")+args.comment+"_"+ args.dataset+"_"+ args.model+"_"+ args.model_type+"_"+"embed{"+str(args.embed_dim)+"}"+"hid{"+str(args.hid_dim)+"}"+"hidhid{"+str(args.hid_hid_dim)+"}"+"lyrs{"+str(args.num_layers)+"}"+"lr{"+str(args.lr_init)+"}"+"wd{"+str(args.weight_decay)+"}"
-path = '../runs'
+path = './runs'
 
 log_dir = join(path, args.dataset, save_name)
 args.log_dir = log_dir

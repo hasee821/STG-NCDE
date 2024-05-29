@@ -2,7 +2,7 @@ import torch
 import torch.nn.functional as F
 import torch.nn as nn
 import controldiffeq
-from vector_fields import *
+from model.vector_fields import *
 
 class NeuralGCDE(nn.Module):
     def __init__(self, args, func_f, func_g, input_channels, hidden_channels, output_channels, initial, device, atol, rtol, solver):
@@ -44,7 +44,7 @@ class NeuralGCDE(nn.Module):
         #supports = F.softmax(F.relu(torch.mm(self.nodevec1, self.nodevec1.transpose(0,1))), dim=1)
         spline = controldiffeq.NaturalCubicSpline(times, coeffs)
         if self.init_type == 'fc':
-            h0 = self.initial_h(spline.evaluate(times[0]))
+            h0 = self.initial_h(spline.evaluate(times[0]))    #B, N, hidden
             z0 = self.initial_z(spline.evaluate(times[0]))
         elif self.init_type == 'conv':
             h0 = self.start_conv_h(spline.evaluate(times[0]).transpose(1,2).unsqueeze(-1)).transpose(1,2).squeeze()
@@ -63,7 +63,7 @@ class NeuralGCDE(nn.Module):
         # init_state = self.encoder.init_hidden(source.shape[0])
         # output, _ = self.encoder(source, init_state, self.node_embeddings)      #B, T, N, hidden
         # output = output[:, -1:, :, :]                                   #B, 1, N, hidden
-        z_T = z_t[-1:,...].transpose(0,1)
+        z_T = z_t[-1:,...].transpose(0,1)      #输入区间最后一个时间点的状态预测
 
         #CNN based predictor
         output = self.end_conv(z_T)                         #B, T*C, N, 1

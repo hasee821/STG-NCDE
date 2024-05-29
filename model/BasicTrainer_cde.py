@@ -76,7 +76,7 @@ class Trainer(object):
         # for batch_idx, (data, target) in enumerate(self.train_loader):
         for batch_idx, batch in enumerate(self.train_loader):
             batch = tuple(b.to(self.device, dtype=torch.float) for b in batch)
-            *train_coeffs, target = batch  #*test_coeffs, target = batch 这行代码是将batch元组中的元素分配给test_coeffs和target。这里的*操作符用于解包元组，它会将元组中的大部分元素赋值给test_coeffs，而最后一个元素则赋值给target。这是Python的一种高级赋值方式，可以方便地将一个序列的元素分配给多个变量。
+            *train_coeffs, target = batch  #*test_coeffs, target = batch 这行代码是将batch元组中的元素分配给test_coeffs和target。这里的*操作符用于解包元组，它会将元组中的大部分元素赋值给test_coeffs作为列表，而最后一个元素则赋值给target。这是Python的一种高级赋值方式，可以方便地将一个序列的元素分配给多个变量。
             # data = data[..., :self.args.input_dim]
             label = target[..., :self.args.output_dim]  # (..., 1)
             self.optimizer.zero_grad()

@@ -63,7 +63,7 @@ class VectorFieldGDE(torch.nn.Module):
         # out = (vector_field_g @ control_gradient.unsqueeze(-1)).squeeze(-1)
         return out
 
-class VectorFieldGDE_dev(torch.nn.Module):
+class VectorFieldGDE_dev(torch.nn.Module): #微分函数
     def __init__(self, dX_dt, func_f, func_g):
         """Defines a controlled vector field.
 
@@ -84,22 +84,22 @@ class VectorFieldGDE_dev(torch.nn.Module):
 
     def __call__(self, t, hz):
         # control_gradient is of shape (..., input_channels)
-        control_gradient = self.dX_dt(t)
+        control_gradient = self.dX_dt(t)   # B,N,input
         # vector_field is of shape (..., hidden_channels, input_channels)
 
-        h = hz[0] # h: torch.Size([64, 207, 32])
-        z = hz[1] # z: torch.Size([64, 207, 32])
-        vector_field_f = self.func_f(h) # vector_field_f: torch.Size([64, 207, 32, 2])
-        vector_field_g = self.func_g(z) # vector_field_g: torch.Size([64, 207, 32, 2])
+        h = hz[0] # h: torch.Size([64, 207, hidden_channels])
+        z = hz[1] # z: torch.Size([64, 207, ])
+        vector_field_f = self.func_f(h) # vector_field_f: torch.Size([64, 207, hidden_channel, input_channel])
+        vector_field_g = self.func_g(z) # vector_field_g: torch.Size([64, 207, hidden_channel, hiden_channel])
 
         # vector_field_fg = torch.mul(vector_field_g, vector_field_f) # vector_field_fg: torch.Size([64, 207, 32, 2])
         vector_field_fg = torch.matmul(vector_field_g, vector_field_f)
         # out is of shape (..., hidden_channels)
         # (The squeezing is necessary to make the matrix-multiply properly batch in all cases)
-        dh = (vector_field_f @ control_gradient.unsqueeze(-1)).squeeze(-1)
+        dh = (vector_field_f @ control_gradient.unsqueeze(-1)).squeeze(-1)  # @符号表示矩阵乘法
         out = (vector_field_fg @ control_gradient.unsqueeze(-1)).squeeze(-1)
-        # dh: torch.Size([64, 207, 32])
-        # out: torch.Size([64, 207, 32])
+        # dh: torch.Size([64, 207, hiden_channels])
+        # out: torch.Size([64, 207, hiden_channels])
         return tuple([dh,out])
 
 
@@ -240,6 +240,7 @@ def cdeint_gde(dX_dt, z0, func_f, func_g, t, adjoint=True, **kwargs):
     return out
 
 def cdeint_gde_dev(dX_dt, h0, z0, func_f, func_g, t, adjoint=True, **kwargs):
+    #下述注释前加r的作用，是使得字符串中的反斜杠不被转义
     r"""Solves a system of controlled differential equations.
 
     Solves the controlled problem:
@@ -285,4 +286,13 @@ def cdeint_gde_dev(dX_dt, h0, z0, func_f, func_g, t, adjoint=True, **kwargs):
     vector_field = VectorFieldGDE_dev(dX_dt=dX_dt, func_f=func_f, func_g=func_g)
     init0 = (h0,z0)
     out = odeint(func=vector_field, y0=init0, t=t, **kwargs)
-    return out[-1]
+    return out[-1]         #仅返回z的值
+
+
+#torchdiffeq.odeint()参数说明
+#func: 微分函数
+#y0: 初始状态
+#t: 输出时间序列
+#atol: 绝对误差容忍度
+#rtol: 相对误差
+
