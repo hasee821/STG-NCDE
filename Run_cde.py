@@ -61,7 +61,7 @@ args.add_argument('--num_nodes', default=config['data']['num_nodes'], type=int)
 args.add_argument('--tod', default=config['data']['tod'], type=eval)
 args.add_argument('--normalizer', default=config['data']['normalizer'], type=str)
 args.add_argument('--column_wise', default=config['data']['column_wise'], type=eval)
-args.add_argument('--default_graph', default=config['data']['default_graph'], type=eval)
+args.add_argument('--default_graph', default=config['data']['default_graph'], type=eval) #type=eval是什么意思？ eval() 函数用来执行一个字符串表达式，并返回表达式的值。
 #model
 args.add_argument('--model_type', default=config['model']['type'], type=str)
 args.add_argument('--g_type', default=config['model']['g_type'], type=str)

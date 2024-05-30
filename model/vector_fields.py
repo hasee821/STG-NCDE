@@ -137,15 +137,16 @@ class VectorField_g(torch.nn.Module):
         #                                    for _ in range(num_hidden_layers - 1))
 
         #FIXME:
-        # self.linear_out = torch.nn.Linear(hidden_hidden_channels, input_channels * hidden_channels) #32,32*4  -> # 32,32,4 
-        self.linear_out = torch.nn.Linear(hidden_hidden_channels, hidden_channels * hidden_channels) #32,32*4  -> # 32,32,4 
+        # self.linear_out = torch.nn.Linear(hidden_hidden_channels, input_channels * hidden_channels) 
+        self.linear_out = torch.nn.Linear(hidden_hidden_channels, hidden_channels * hidden_channels)  
         
         self.g_type = g_type
         if self.g_type == 'agc':
-            self.node_embeddings = nn.Parameter(torch.randn(num_nodes, embed_dim), requires_grad=True)
-            self.cheb_k = cheb_k
-            self.weights_pool = nn.Parameter(torch.FloatTensor(embed_dim, cheb_k, hidden_hidden_channels, hidden_hidden_channels))
-            self.bias_pool = nn.Parameter(torch.FloatTensor(embed_dim, hidden_hidden_channels))
+            # 学习节点嵌入
+            self.node_embeddings = nn.Parameter(torch.randn(num_nodes, embed_dim), requires_grad=True)  #(N, embed_dim=10)
+            self.cheb_k = cheb_k #2
+            self.weights_pool = nn.Parameter(torch.FloatTensor(embed_dim, cheb_k, hidden_hidden_channels, hidden_hidden_channels)) #10,2,64,64
+            self.bias_pool = nn.Parameter(torch.FloatTensor(embed_dim, hidden_hidden_channels)) #10,64
 
 
     def extra_repr(self):
@@ -170,14 +171,14 @@ class VectorField_g(torch.nn.Module):
         z = z.tanh()
         return z #torch.Size([64, 307, 64, 1])
 
-    def agc(self, z):
+    def agc(self, z):   # B,N,Hidden_hidden_channels
         """
         Adaptive Graph Convolution
         - Node Adaptive Parameter Learning
         - Data Adaptive Graph Generation
         """
         node_num = self.node_embeddings.shape[0]
-        supports = F.softmax(F.relu(torch.mm(self.node_embeddings, self.node_embeddings.transpose(0, 1))), dim=1)
+        supports = F.softmax(F.relu(torch.mm(self.node_embeddings, self.node_embeddings.transpose(0, 1))), dim=1) #torch.mm作用是矩阵相乘
         # laplacian=False
         laplacian=False
         if laplacian == True:
@@ -187,7 +188,7 @@ class VectorField_g(torch.nn.Module):
             # support_set = [-supports]
         else:
             support_set = [torch.eye(node_num).to(supports.device), supports]
-        #default cheb_k = 3
+        #default cheb_k = 2
         for k in range(2, self.cheb_k):
             support_set.append(torch.matmul(2 * supports, support_set[-1]) - support_set[-2])
         supports = torch.stack(support_set, dim=0)
